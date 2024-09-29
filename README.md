@@ -1,5 +1,5 @@
 # E-Commerce-Public-Dataset-Analysis
-##### RIZQI HAIRUNNISA | VIRAGOHUEGAH | DICODING_BANGKIT 2024 BATCH 2
+##### RIZQI HAIRUNNISA | VIRAGOHUEGAH | M315B4KX3947 | DICODING_BANGKIT 2024 BATCH 2
 
 Welcome to the **QISHOP E-Commerce Dashboard**! This dashboard provides insights into our e-commerce data, featuring daily orders, best and worst performing products, customer and seller distributions, RFM analysis, and more. 
 
