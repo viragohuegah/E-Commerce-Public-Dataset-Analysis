@@ -49,7 +49,5 @@ Check out the live version of the app here: [QISHOP Dashboard](https://e-commerc
     ```bash
     streamlit run dashboard.py
     ```
-
-RIZQI HAIRUNNISA
-VIRAGOHUEGAH
-DICODING_BANGKIT 2024 BATCH 2
+    
+#### RIZQI HAIRUNNISA | VIRAGOHUEGAH | DICODING_BANGKIT 2024 BATCH 2
