@@ -368,3 +368,5 @@ with col1:
 with col2:
     st.subheader("Distribution of Sellers")
     st_folium(mymap_seller, width=700, height=400)
+
+if __name__ == "__main__":
