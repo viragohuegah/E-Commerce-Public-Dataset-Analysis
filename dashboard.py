@@ -370,3 +370,4 @@ with col2:
     st_folium(mymap_seller, width=700, height=400)
 
 if __name__ == "__main__":
+    pass
