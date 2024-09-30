@@ -48,16 +48,15 @@ def create_bystate_df(df):
     return bystate_df
 
 @st.cache_data
-def create_rfm_df(df):
-    df["order_approved_at"] = pd.to_datetime(df["order_approved_at"])
+def create_rfm_df(df, recent_date):
     rfm_df = df.groupby(by="customer_id", as_index=False).agg({
         "order_approved_at": "max",
         "order_id": "nunique",
         "payment_value": "sum"
     })
+
     rfm_df.columns = ["customer_id", "max_order_timestamp", "frequency", "monetary"]
-    recent_date = df["order_approved_at"].max()
-    rfm_df["recency"] = (recent_date - rfm_df["max_order_timestamp"]).dt.days
+    rfm_df["recency"] = rfm_df["max_order_timestamp"].apply(lambda x: (recent_date - x).days)
     rfm_df.drop("max_order_timestamp", axis=1, inplace=True)
     return rfm_df
 
@@ -65,15 +64,20 @@ def create_rfm_df(df):
 @st.cache_data
 def load_data():
     df = pd.read_csv("main_data.csv")
-    datetime_columns = ["order_approved_at", "order_delivered_customer_date"]
+    datetime_columns = ["order_approved_at",
+                        "order_delivered_customer_date",
+                        "order_delivered_carrier_date",
+                        "order_estimated_delivery_date"]
     df.sort_values(by="order_approved_at", inplace=True)
-    df.reset_index(inplace=True)
     for column in datetime_columns:
-        df[column] = pd.to_datetime(df[column])
+        df[column] = pd.to_datetime(df[column], errors='coerce')
     return df
 
 # Load the dataset
 df = load_data()
+
+# Calculate recent_date from the full dataset (before applying the filter)
+recent_date = df["order_approved_at"].max()
 
 # Streamlit sidebar for filtering by date range
 min_date = df["order_approved_at"].min()
@@ -87,15 +91,18 @@ with st.sidebar:
         value=[min_date, max_date]
     )
 
+# Filter the dataset based on the selected date range
 main_df = df[(df["order_approved_at"] >= str(start_date)) & 
               (df["order_approved_at"] <= str(end_date))]
 
-# Create cached dataframes
+# Create cached dataframes using the filtered data
 daily_orders_df = create_daily_orders_df(main_df)
 sum_order_items_df = create_sum_order_items_df(main_df)
 sum_order_items_by_order_id_df = create_sum_order_items_by_order_id_df(main_df)
 bystate_df = create_bystate_df(main_df)
-rfm_df = create_rfm_df(main_df)
+
+# Create the RFM dataframe using the filtered data but with the recent_date based on the full dataset
+rfm_df = create_rfm_df(main_df, recent_date)
 
 #=====================================================================================================================
 st.title('Welcome to QISHOP E-Commerce Dashboard! :ribbon:')
@@ -278,7 +285,6 @@ ax[0].set_ylabel(None)
 ax[0].set_xlabel(None)
 ax[0].set_title("By Recency (days)", loc="center", fontsize=20)
 ax[0].tick_params(axis='x', labelsize=14)
-ax[0].set_ylim(0, 5)
 
 # Plot for Frequency
 sns.barplot(y="frequency", x="short_customer_id", 
@@ -298,11 +304,14 @@ ax[2].set_xlabel(None)
 ax[2].set_title("By Monetary", loc="center", fontsize=20)
 ax[2].tick_params(axis='x', labelsize=14)
 
+for axis in ax:
+    axis.tick_params(axis='x', rotation=45)
 
 # Display the plot in Streamlit
 st.pyplot(fig)
 
 #=====================================================================================================================
+# 
 # Menghapus duplikasi berdasarkan 'seller_id'
 unique_sellers_df = df.drop_duplicates(subset='seller_id')
 unique_customers_df = df.drop_duplicates(subset='customer_id')
@@ -331,7 +340,6 @@ customer_locations = [
                                    unique_customers_df['geolocation_lng_customer'])
 ]
 
-# Initialize the map centered on average customer location using Stamen Terrain tiles
 mymap_customer = folium.Map(
     location=map_center_customer, 
     zoom_start=6, 
@@ -346,7 +354,6 @@ seller_locations = [
                                    unique_sellers_df['geolocation_lng_seller'])
 ]
 
-# Initialize the map centered on average seller location using Stamen Terrain tiles
 mymap_seller = folium.Map(
     location=map_center_seller, 
     zoom_start=6, 
